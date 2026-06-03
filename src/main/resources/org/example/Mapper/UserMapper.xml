@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace必须对应Mapper接口的全限定名 -->
+<mapper namespace="org.example.Mapper.UserMapper">
+    <!-- SQL语句 -->
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache" />
+    <!--添加-->
+    <insert id="insertUser" >
+        insert into User values (7,"miao","12345",18);
+    </insert>
+
+    <!--删除-->
+    <delete id="delete">
+        delete from User where id=1;
+    </delete>
+
+
+    <!--查询语句，后面加上resultType，获取数据后要给谁，确定一个映射关系,resultType 默认的，字段名跟属性名一样，否则使用Map -->
+    <select id="getUser" resultType="User">
+<!--查询一条数据可以使用对象来接受，查询多条数据使用List集合-->
+    select * from User where age=3;
+    </select>
+    <select id="getFromUser" resultType="User">
+        select * from  User;
+    </select>
+    <!--传入数据，#{}代表占位符，${}代表传入字符，这个里面表示传进去一个字面量类型的值-->
+    <select id="getUserName" resultType="User">
+<!--传入多个参数，使用arg0,arg1-->
+        select * from User where id=#{arg0} and name=#{arg1};
+ </select>
+    <select id="getUserMap" resultType="User">
+        select * from User where id=#{id} and name=#{name};
+    </select>
+    <!--传递对象，会根据属性自动配对-->
+    <select id="getUser1" resultType="User">
+        select *
+        from User
+        where id=#{id} and name=#{name};
+    </select>
+    <select id="getUser2" resultType="User">
+        select *
+        from User
+        where id=#{id} and name=#{username};
+    </select>
+    <select id="getUserMap1" resultType="map">
+        select *
+        from User
+        where id=#{id};
+    </select>
+
+    <select id="getUserMap2" resultType="map">
+        select *
+        from User
+        where age=#{id};
+    </select>
+    <!--模糊查询-->
+    <select id="getUserName10" resultType="User">
+        select * from User where name like  "%"#{username}"%";
+    </select>
+    <!--查询动态表名-->
+    <select id="seleteUser11" resultType="User">
+        select * from ${username};
+    </select>
+    <!--批量删除-->
+    <delete id="deleteUserId">
+    delete from User where id in (${id});
+    </delete>
+
+
+    <!--设置自增的主键,首先数据库要设置自增的主键-->
+    <insert id="insetUser" useGeneratedKeys="true" keyProperty="id" >
+        insert into User(name,password,age) values (#{name},#{password},#{age});
+    </insert>
+    
+
+
+    <!--配置映射，id是唯一标识，type是实体类-->
+    <resultMap id="User_User1" type="User1">
+        <!--id是主键 property是实体类中的属性，column是字段名-->
+        <id property="id" column="id"></id>
+        <result property="username" column="name"></result>
+    </resultMap>
+
+    <select id="getFromUser1" resultMap="User_User1">
+        select *
+        from User;
+    </select>
+
+
+
+    <!--多表查询-->
+
+    <!--先确定主体pojo类，将另一个表的pojo类当作主类的属性，就能将副表的属性对用上其他表的字段名-->
+    <resultMap id="User_BuMen" type="User">
+        <!---->
+        <id property="id" column="id"></id>
+        <result property="buMen.id" column="b_id"></result>
+        <result property="buMen.name" column="b_name"></result>
+    </resultMap>
+    <select id="getUserId" resultMap="User_BuMen">
+        select *
+        from User
+        left join bumen
+        on User.b_id=bumen.b_id
+        where User.id=#{userid};
+    </select>
+
+    <!--先确定主体pojo类，将另一个表的pojo类当作主类的属性，就能将副表的属性对用上其他表的字段名-->
+    <resultMap id="User_BuMen1" type="User">
+        <!--使用了association标签，在内部直接声明映射关系,必须一个一个指定，否则会找不到映射关系返回null-->
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <!--property:指属性的名字  column指：对应哪一个属性的类-->
+        <association property="buMen" column="BuMen">
+            <id property="id" column="b_id"></id>
+            <result property="name" column="b_name"></result>
+        </association>
+    </resultMap>
+    <select id="getUserId1" resultMap="User_BuMen1">
+        select *
+        from User
+        left join bumen
+        on USER.b_id=bumen.b_id
+        where  user.id=#{userid};
+    </select>
+
+    <!--分布式查询
+    1.先查询员工信息
+    2.根据员工信息中的部门id查询部门-->
+    <!--column:你要使用上次查询结果的哪一个字段的值赋给sql语句来查询
+                select:全类型名称.方法-->
+    <resultMap id="UserOne" type="User">
+        <id property="id" column="id"></id>
+        <result property="name" column="name"></result>
+        <result property="age" column="age"></result>
+        <result property="password" column="password"></result>
+        <association property="buMen"
+                     select="org.example.Mapper.BuMenMapper.getBumen"
+                     column="b_id"
+                    fetchType="eager"
+        >
+
+        </association>
+    </resultMap>
+    <select id="getUserOne" resultMap="UserOne">
+        select *
+        from User
+        where user.id=#{id};
+    </select>
+
+    <select id="getUser4" resultType="User">
+        select *
+        from user
+            <!--trim 如果if条件中 and在后面就可以去掉,-->
+        <trim prefix="where" suffixOverrides="and|or" >
+            <if test="name!=''and name!=null"/>
+            name=#{name} and
+            <if test="age!=''and age!=null">
+             age=#{age};
+            </if>
+        </trim>
+    </select>
+
+    <!--批量删除使用数组-->
+    <delete id="deleteUser">
+        delete from user where id=
+                               <foreach collection="id" item="id" separator="or">
+                                   #{id}
+                               </foreach>
+    </delete>
+    <!--批量添加 coll:  pa里面的名称，separator:每一次循环后面跟着的符号-->
+    <insert id="insetUser1">
+        insert into user values
+                             <foreach collection="users" item="user" separator=",">
+                                 (null,#{user.name},#{user.password},#{user.age},null)
+                             </foreach>
+    </insert>
+    <!--sql片段,使用include插入-->
+    <sql id="name+password" >id,name,password </sql>
+
+    <select id="getUser12" resultType="User">
+        select <include refid="name+password"> </include>from User ;
+    </select>
+</mapper>

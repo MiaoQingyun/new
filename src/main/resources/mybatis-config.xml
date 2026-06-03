@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--约束-->
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <!--引入properties 配置文件-->
+    <properties resource="jdbc.properties" />
+<!--设置别名 以包为单位 设置别名，默认的别名就是类名，不区分大小写-->
+    <typeAliases>
+    <package name="org.example.Pojo"/>
+    <package name="com.example.Pojo"/>
+    </typeAliases>
+
+    <!--设置分页插件-->
+    <plugins>
+        <plugin interceptor="com.github.pagehelper.PageInterceptor"></plugin>
+    </plugins>
+    <!--设置连接数据库的环境-->
+    <!--
+    environments:多个数据库 default：链接默认的
+    -->
+    <environments default="development">
+        <!--唯一id-->
+    <environment id="development">
+        <!--设置事务管理方式 jdbc手动提交-->
+        <transactionManager type="JDBC"/>
+        <!--配置数据源-->
+        <dataSource type="POOLED">
+            <!--使用外面的配置文件-->
+            <property name="driver" value="${jdbc.driver}"/>
+            <property name="url"
+                      value="${jdbc.url}"/>
+            <property name="username" value="${jdbc.username}"/>
+            <property name="password" value="${jdbc.password}"/>
+        </dataSource>
+    </environment>
+</environments>
+
+
+    <!--引入映射文件-->
+    <mappers>
+<!--    <mapper resource="mappers/UserMapper.xml"/>-->
+<!--导入包的时候，映射文件在资源目录下的路径要与你的java代码中类的路径一致，接口名字跟类名也要一致-->
+        <package name="org.example.Mapper"/>
+        <package name="com.example.Mapper"/>
+
+</mappers>
+</configuration>
